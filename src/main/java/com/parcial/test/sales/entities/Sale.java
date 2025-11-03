@@ -56,12 +56,24 @@ public class Sale {
   @PrePersist
   protected void onCreate(){
     fechaVenta=new Date();
+    calcularMontoTotal();
   }
 
-  @PrePersist
   @PreUpdate
+  public void onUpdate(){
+    calcularMontoTotal();
+  }
+
   public void calcularMontoTotal(){
-    this.MontoTotal=sales.stream().mapToDouble(SaleDetail::getSubtotal).sum();
+    this.MontoTotal = sales.stream()
+            .mapToDouble(detalle -> {
+                // Calcular subtotal si es nulo
+                if (detalle.getSubtotal() == null && detalle.getCantidad() != null && detalle.getPrecioUnitario() != null) {
+                    detalle.calcularSubTotal();
+                }
+                return detalle.getSubtotal() != null ? detalle.getSubtotal() : 0.0;
+            })
+            .sum();
   }
 
   //helpers

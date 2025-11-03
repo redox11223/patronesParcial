@@ -42,10 +42,10 @@ public class Product {
   @EqualsAndHashCode.Exclude
   private List<SaleDetail> detalleVenta=new ArrayList<>();
 
-  @Column(precision = 12,scale = 2,nullable = false)
+  @Column(nullable = false)
   private Double costoImportacionOrigen;
 
-  @Column(precision = 12,scale = 2)
+  @Column
   private Double costoImportacionCorp;
 
   @Column(nullable = false)

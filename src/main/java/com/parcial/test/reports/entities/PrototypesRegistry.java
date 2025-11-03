@@ -5,57 +5,58 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 @Component
 public class PrototypesRegistry {
-  private Map<String,Prototype> prototypes= new HashMap<>();
 
-  @PostConstruct
-  public void initReportsPrototypes(){
-    Report reporteMensual= Report.builder()
-            .tipoReporte("Mensual")
-            .titulo("Reporte Financiero Mensual")
-            .encabezado("FinanCorp S.A. - Consolidado Mensual")
-            .pieReporte("FinanCorp S.A. - Documento base")
-            .esPlantilla(true)
-            .build();
-    Report reporteAnual= Report.builder()
-            .tipoReporte("Anual")
-            .titulo("Reporte Financiero Anual")
-            .encabezado("FinanCorp S.A. - Consolidado Anual")
-            .pieReporte("FinanCorp S.A. - Documento base")
-            .esPlantilla(true)
-            .build();
-    Report reporteTrimestral= Report.builder()
-            .tipoReporte("Trimestral")
-            .titulo("Reporte Financiero Trimestral")
-            .encabezado("FinanCorp S.A. - Consolidado Trimestral")
-            .pieReporte("FinanCorp S.A. - Documento base")
-            .esPlantilla(true)
-            .build();
+    private final Map<String, Prototype> plantillas = new HashMap<>();
 
-    registrarPrototype("Mensual",reporteMensual);
-    registrarPrototype("Anual",reporteAnual);
-    registrarPrototype("Trimestral",reporteTrimestral);
-  }
+    @PostConstruct
+    public void init() {
+        // Plantilla de Reporte Mensual
+        Report reporteMensual = Report.builder()
+                .tipoReporte("MENSUAL")
+                .titulo("Reporte Mensual de Ingresos - FinanCorp S.A.")
+                .encabezado("Consolidado de ventas e inventarios del mes")
+                .pieReporte("Documento generado automáticamente por SERF")
+                .monedaCorporativa("EUR")
+                .esPlantilla(true)
+                .build();
+        plantillas.put("MENSUAL", reporteMensual);
 
+        // Plantilla de Reporte Trimestral
+        Report reporteTrimestral = Report.builder()
+                .tipoReporte("TRIMESTRAL")
+                .titulo("Reporte Trimestral de Gastos e Ingresos - FinanCorp S.A.")
+                .encabezado("Análisis financiero trimestral consolidado")
+                .pieReporte("Documento generado automáticamente por SERF")
+                .monedaCorporativa("EUR")
+                .esPlantilla(true)
+                .build();
+        plantillas.put("TRIMESTRAL", reporteTrimestral);
 
-  public void registrarPrototype(String nombre,Prototype prototype){
-     prototypes.put(nombre,prototype);
-  }
-
-  public Prototype obtenerPrototype(String tipo){
-    Prototype prototype=prototypes.get(tipo);
-    if(prototype==null){
-      throw new IllegalArgumentException("No existe platilla para tipo: "+tipo+
-              ". Tipos disponibles: " + prototypes.keySet()
-      );
+        // Plantilla de Reporte Anual
+        Report reporteAnual = Report.builder()
+                .tipoReporte("ANUAL")
+                .titulo("Reporte Anual Consolidado - FinanCorp S.A.")
+                .encabezado("Balance general anual de todas las filiales")
+                .pieReporte("Documento generado automáticamente por SERF")
+                .monedaCorporativa("EUR")
+                .esPlantilla(true)
+                .build();
+        plantillas.put("ANUAL", reporteAnual);
     }
-    return prototype.clone();
-  }
 
-  public Set<String> listarTiposDisponibles(){
-    return prototypes.keySet();
-  }
+    public Prototype obtenerPlantilla(String tipo) {
+        Prototype plantilla = plantillas.get(tipo.toUpperCase());
+        if (plantilla == null) {
+            throw new IllegalArgumentException("No existe plantilla para el tipo: " + tipo);
+        }
+        return plantilla.clone();
+    }
+
+    public void registrarPlantilla(String tipo, Prototype plantilla) {
+        plantillas.put(tipo.toUpperCase(), plantilla);
+    }
 }
+
