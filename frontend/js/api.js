@@ -14,6 +14,19 @@ class ApiService {
         }
     }
 
+    async getText(endpoint) {
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.text();
+        } catch (error) {
+            console.error('Error en GET TEXT:', error);
+            throw error;
+        }
+    }
+
     async post(endpoint, data) {
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {

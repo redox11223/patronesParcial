@@ -29,7 +29,9 @@ public class SubseccionReporte implements ComponenteReporte {
                 sb.append("    ").append(linea).append("\n");
             }
         }
-        
+
+
+
         return sb.toString();
     }
 

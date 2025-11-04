@@ -45,8 +45,8 @@ function llenarSelectProductos() {
         const option = document.createElement('option');
         option.value = producto.id;
         const precio = producto.costoImportacionCorp || producto.costoImportacionOrigen || 0;
-        option.textContent = `${producto.nombre} - ¥ ${precio.toFixed(2)}`;
-        option.dataset.precio = precio;
+        option.textContent = `${producto.nombre} -  € ${precio.toFixed(2)}`;
+        option.dataset.precio = precio*1.3;
         select.appendChild(option);
     });
 }
@@ -56,7 +56,7 @@ function actualizarPrecio() {
     const selectedOption = select.options[select.selectedIndex];
 
     if (selectedOption.dataset.precio) {
-        document.getElementById('precioUnitario').value = `$${parseFloat(selectedOption.dataset.precio).toFixed(2)}`;
+        document.getElementById('precioUnitario').value = `€${parseFloat(selectedOption.dataset.precio).toFixed(2)}`;
         calcularTotal();
     } else {
         document.getElementById('precioUnitario').value = '';
@@ -72,7 +72,7 @@ function calcularTotal() {
     if (selectedOption.dataset.precio && cantidad > 0) {
         const precio = parseFloat(selectedOption.dataset.precio);
         const total = precio * cantidad;
-        document.getElementById('montoTotal').value = `$${total.toFixed(2)}`;
+        document.getElementById('montoTotal').value = `€${total.toFixed(2)}`;
     } else {
         document.getElementById('montoTotal').value = '';
     }

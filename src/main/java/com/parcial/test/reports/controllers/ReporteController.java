@@ -94,5 +94,33 @@ public class ReporteController {
                 .collect(java.util.stream.Collectors.toList());
         return ResponseEntity.ok(ventasDTO);
     }
+
+    @GetMapping("/reporte-trimestral")
+    public ResponseEntity<String> generarReporteTrimestralTexto(
+            @RequestParam int trimestre,
+            @RequestParam int anio) {
+
+        String reporte = reporteService.generarReporteTrimestral(trimestre, anio);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(reporte);
+    }
+
+    @GetMapping("/reporte-anual")
+    public ResponseEntity<String> generarReporteAnualTexto(@RequestParam int anio) {
+
+        String reporte = reporteService.generarReporteAnual(anio);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(reporte);
+    }
 }
 

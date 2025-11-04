@@ -7,7 +7,27 @@ async function generarReporte(event) {
 
     try {
         console.log('Solicitando reporte:', tipoReporte);
-        const datos = await api.get(`/reportes/${tipoReporte}`);
+
+        let url = `/reportes/${tipoReporte}`;
+        let datos;
+
+        // Agregar parámetros para reportes trimestrales y anuales
+        if (tipoReporte === 'reporte-trimestral') {
+            const trimestre = document.getElementById('trimestre').value;
+            const anio = document.getElementById('anioTrimestre').value;
+            url += `?trimestre=${trimestre}&anio=${anio}`;
+            // Usar getText para obtener texto plano
+            datos = await api.getText(url);
+        } else if (tipoReporte === 'reporte-anual') {
+            const anio = document.getElementById('anioAnual').value;
+            url += `?anio=${anio}`;
+            // Usar getText para obtener texto plano
+            datos = await api.getText(url);
+        } else {
+            // Usar get normal para JSON
+            datos = await api.get(url);
+        }
+
         console.log('Datos recibidos:', datos);
 
         if (!datos) {
@@ -15,14 +35,22 @@ async function generarReporte(event) {
             return;
         }
 
-        let reporte = generarContenidoReporte(tipoReporte, datos);
+        let reporte;
+
+        // Si el reporte ya viene formateado como texto (trimestral y anual)
+        if (tipoReporte === 'reporte-trimestral' || tipoReporte === 'reporte-anual') {
+            reporte = datos;
+        } else {
+            reporte = generarContenidoReporte(tipoReporte, datos);
+        }
+
         console.log('Reporte generado, longitud:', reporte.length);
 
-        if (conMarcaAgua) {
+        if (conMarcaAgua && (tipoReporte !== 'reporte-trimestral' && tipoReporte !== 'reporte-anual')) {
             reporte = agregarMarcaAgua(reporte);
         }
 
-        if (conFirmaDigital) {
+        if (conFirmaDigital && (tipoReporte !== 'reporte-trimestral' && tipoReporte !== 'reporte-anual')) {
             reporte = agregarFirmaDigital(reporte);
         }
 
@@ -30,6 +58,24 @@ async function generarReporte(event) {
     } catch (error) {
         console.error('Error completo:', error);
         alert('Error al generar reporte: ' + error.message);
+    }
+}
+
+// Función para mostrar/ocultar campos de parámetros según el tipo de reporte
+function mostrarParametrosReporte() {
+    const tipoReporte = document.getElementById('tipoReporte').value;
+    const parametrosTrimestre = document.getElementById('parametrosTrimestre');
+    const parametrosAnual = document.getElementById('parametrosAnual');
+
+    // Ocultar todos los parámetros
+    parametrosTrimestre.style.display = 'none';
+    parametrosAnual.style.display = 'none';
+
+    // Mostrar parámetros según el tipo
+    if (tipoReporte === 'reporte-trimestral') {
+        parametrosTrimestre.style.display = 'block';
+    } else if (tipoReporte === 'reporte-anual') {
+        parametrosAnual.style.display = 'block';
     }
 }
 
@@ -194,3 +240,81 @@ de visualización funciona correctamente.
 `;
     mostrarReporte(reportePrueba);
 }
+
+// Función para exportar el reporte a PDF
+function exportarAPDF() {
+    const { jsPDF } = window.jspdf;
+    const contenido = document.getElementById('reporteContenido').textContent;
+
+    if (!contenido) {
+        alert('No hay ningún reporte generado para exportar');
+        return;
+    }
+
+    try {
+        // Crear instancia de jsPDF
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        // Configurar fuente monoespaciada para mantener el formato
+        doc.setFont('courier');
+        doc.setFontSize(8);
+
+        // Dividir el contenido en líneas
+        const lineas = contenido.split('\n');
+
+        // Configuración de márgenes y posición
+        const margenIzquierdo = 10;
+        const margenSuperior = 10;
+        const alturaLinea = 4;
+        const lineaPorPagina = 65;
+        let y = margenSuperior;
+        let numeroPagina = 1;
+
+        // Agregar líneas al PDF
+        lineas.forEach((linea, index) => {
+            // Si llegamos al final de la página, crear nueva página
+            if (index > 0 && index % lineaPorPagina === 0) {
+                doc.addPage();
+                y = margenSuperior;
+                numeroPagina++;
+            }
+
+            // Agregar la línea al PDF
+            doc.text(linea, margenIzquierdo, y);
+            y += alturaLinea;
+        });
+
+        // Agregar número de páginas en el pie de página
+        const totalPaginas = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPaginas; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.text(
+                `Página ${i} de ${totalPaginas}`,
+                doc.internal.pageSize.getWidth() / 2,
+                doc.internal.pageSize.getHeight() - 10,
+                { align: 'center' }
+            );
+        }
+
+        // Generar nombre de archivo con fecha
+        const tipoReporte = document.getElementById('tipoReporte').selectedOptions[0].text;
+        const fecha = new Date().toISOString().split('T')[0];
+        const nombreArchivo = `Reporte_${tipoReporte.replace(/\s+/g, '_')}_${fecha}.pdf`;
+
+        // Descargar el PDF
+        doc.save(nombreArchivo);
+
+        console.log('PDF generado exitosamente:', nombreArchivo);
+        alert('✅ Reporte exportado a PDF exitosamente');
+
+    } catch (error) {
+        console.error('Error al generar PDF:', error);
+        alert('❌ Error al exportar a PDF: ' + error.message);
+    }
+}
+
