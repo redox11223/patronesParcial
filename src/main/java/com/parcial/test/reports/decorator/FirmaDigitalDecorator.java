@@ -57,7 +57,7 @@ public class FirmaDigitalDecorator implements ReporteDecorator {
 
             return hexString.toString().toUpperCase();
         } catch (NoSuchAlgorithmException e) {
-            return "ERROR-HASH-" + System.currentTimeMillis();
+            throw new com.parcial.test.exceptions.ReportGenerationException("Error al generar hash SHA-256 para la firma digital", e);
         }
     }
 }

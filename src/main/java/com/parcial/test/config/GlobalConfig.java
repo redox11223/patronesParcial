@@ -33,7 +33,7 @@ public class GlobalConfig {
       Double cambio= tasaCambio.get(tipoCambio);
 
       if(cambio==null){
-        throw new IllegalArgumentException("No existe tasa de cambio en el sistema para:"+ monedaOrigen);
+        throw new com.parcial.test.exceptions.ConfigurationException("No existe tasa de cambio en el sistema para: "+ monedaOrigen);
       }
 
       return Math.round(monto*cambio*100.0)/100.0;
