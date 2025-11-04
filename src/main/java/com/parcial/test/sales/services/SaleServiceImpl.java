@@ -1,6 +1,9 @@
 package com.parcial.test.sales.services;
 
 import com.parcial.test.config.CurrencyConversionService;
+import com.parcial.test.exceptions.BusinessLogicException;
+import com.parcial.test.exceptions.ResourceNotFoundException;
+import com.parcial.test.exceptions.ValidationException;
 import com.parcial.test.products.entities.Product;
 import com.parcial.test.products.repository.ProductRepo;
 import com.parcial.test.sales.entities.Sale;
@@ -27,14 +30,16 @@ public class SaleServiceImpl implements SaleService {
     @Override
     @Transactional
     public Sale save(Sale sale) {
+        validateSale(sale);
+
         // Validar y actualizar stock de productos
         for (SaleDetail detalle : sale.getSales()) {
             Product producto = productRepo.findById(detalle.getProducto().getId())
-                    .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + detalle.getProducto().getId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Producto", String.valueOf(detalle.getProducto().getId())));
 
             // Verificar stock disponible
             if (!producto.haystock(detalle.getCantidad())) {
-                throw new IllegalStateException(
+                throw new BusinessLogicException(
                     "Stock insuficiente para producto: " + producto.getNombre() +
                     ". Disponible: " + producto.getStock() +
                     ", Solicitado: " + detalle.getCantidad()
@@ -65,16 +70,25 @@ public class SaleServiceImpl implements SaleService {
     @Override
     public Sale getById(Long id) {
         return salesRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Venta no encontrada: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Venta", String.valueOf(id)));
     }
 
     @Override
     public List<Sale> getByPais(String pais) {
+        if (pais == null || pais.trim().isEmpty()) {
+            throw new ValidationException("pais", "El país no puede estar vacío");
+        }
         return salesRepo.findByPaisFilial(pais);
     }
 
     @Override
     public List<Sale> getByFecha(LocalDate inicio, LocalDate fin) {
+        if (inicio == null || fin == null) {
+            throw new ValidationException("fecha", "Las fechas de inicio y fin son obligatorias");
+        }
+        if (inicio.isAfter(fin)) {
+            throw new ValidationException("fecha", "La fecha de inicio debe ser anterior a la fecha de fin");
+        }
         Date fechaInicio = Date.from(inicio.atStartOfDay(ZoneId.systemDefault()).toInstant());
         Date fechaFin = Date.from(fin.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant());
         return salesRepo.findByFechaVentaBetween(fechaInicio, fechaFin);
@@ -84,27 +98,38 @@ public class SaleServiceImpl implements SaleService {
     public Double getTotalVentasEnEuros() {
         List<Sale> ventas = salesRepo.findAll();
         return ventas.stream()
-                .mapToDouble(sale -> currencyConversionService.convertirAMonedaCorporativa(
-                        sale.getMontoTotal(),
-                        sale.getMonedaLocal()
-                ))
+                .mapToDouble(sale -> {
+                    try {
+                        return currencyConversionService.convertirAMonedaCorporativa(
+                            sale.getMontoTotal(),
+                            sale.getMonedaLocal()
+                        );
+                    } catch (IllegalArgumentException e) {
+                        throw new BusinessLogicException("Error al calcular total de ventas: " + e.getMessage(), e);
+                    }
+                })
                 .sum();
     }
 
     @Override
     @Transactional
     public Sale crearVentaSimple(Long clienteId, Long productoId, Integer cantidad) {
+        // Validar parámetros
+        if (cantidad == null || cantidad <= 0) {
+            throw new ValidationException("cantidad", "La cantidad debe ser mayor a 0");
+        }
+
         // Buscar cliente
         com.parcial.test.clients.entities.Client cliente = clienteRepo.findById(clienteId)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + clienteId));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente", String.valueOf(clienteId)));
 
         // Buscar producto
         Product producto = productRepo.findById(productoId)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + productoId));
+                .orElseThrow(() -> new ResourceNotFoundException("Producto", String.valueOf(productoId)));
 
         // Verificar stock
         if (!producto.haystock(cantidad)) {
-            throw new IllegalStateException(
+            throw new BusinessLogicException(
                 "Stock insuficiente para producto: " + producto.getNombre() +
                 ". Disponible: " + producto.getStock() +
                 ", Solicitado: " + cantidad
@@ -146,5 +171,28 @@ public class SaleServiceImpl implements SaleService {
 
         return ventaGuardada;
     }
-}
 
+    private void validateSale(Sale sale) {
+        if (sale.getNumeroFactura() == null || sale.getNumeroFactura().trim().isEmpty()) {
+            throw new ValidationException("numeroFactura", "El número de factura es obligatorio");
+        }
+        if (sale.getCliente() == null) {
+            throw new ValidationException("cliente", "El cliente es obligatorio");
+        }
+        if (sale.getMetodoPago() == null) {
+            throw new ValidationException("metodoPago", "El método de pago es obligatorio");
+        }
+        if (sale.getMonedaLocal() == null) {
+            throw new ValidationException("monedaLocal", "La moneda local es obligatoria");
+        }
+        if (sale.getVendedorResponsable() == null || sale.getVendedorResponsable().trim().isEmpty()) {
+            throw new ValidationException("vendedorResponsable", "El vendedor responsable es obligatorio");
+        }
+        if (sale.getPaisFilial() == null || sale.getPaisFilial().trim().isEmpty()) {
+            throw new ValidationException("paisFilial", "El país de la filial es obligatorio");
+        }
+        if (sale.getSales() == null || sale.getSales().isEmpty()) {
+            throw new ValidationException("sales", "La venta debe tener al menos un detalle");
+        }
+    }
+}

@@ -61,7 +61,7 @@ public class Report implements Prototype{
       reportClone.hashFirmaDigital=null;
       return reportClone;
     } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Error al clonar el reporte",e);
+      throw new com.parcial.test.exceptions.ReportGenerationException("Error al clonar el reporte",e);
     }
   }
 

@@ -1,395 +1,315 @@
-# Sistema SERF - Sistema Empresarial de Gestión de Reportes Financieros
+# SERF - Sistema Empresarial de Reportes Financieros
 
-## 📋 Descripción
-Sistema empresarial para FinanCorp S.A. que integra gestión de productos, ventas y generación automática de reportes financieros consolidados con conversión de monedas.
+Aplicación backend desarrollada para FinanCorp S.A. que gestiona productos importados, ventas internacionales y generación automática de reportes financieros consolidados con conversión de divisas.
 
-## 🎯 Patrones de Diseño Implementados
+## Tecnologías
 
-### 1. **Singleton** - Configuración Global
-- **Clase**: `GlobalConfig` + `CurrencyConversionService`
-- **Propósito**: Gestionar tasas de cambio y configuración corporativa de forma centralizada
-- **Ubicación**: `config/GlobalConfig.java`
+- **Java 17** con Spring Boot 3.x
+- **Spring Data JPA** para persistencia
+- **H2 Database** (desarrollo) / Compatible con PostgreSQL
+- **Lombok** para reducir boilerplate
+- **Maven** como gestor de dependencias
+- **Swagger/OpenAPI** para documentación de API
 
-### 2. **Prototype** - Plantillas de Reportes
-- **Clase**: `Report` (implementa `Prototype`) + `PrototypesRegistry`
-- **Propósito**: Clonar plantillas predefinidas (Mensual, Trimestral, Anual)
-- **Ubicación**: `reports/entities/`
+## Arquitectura del Sistema
 
-### 3. **Builder** - Construcción de Reportes
-- **Clase**: `ReporteBuilder` + `ReporteBuilderImpl`
-- **Propósito**: Construir reportes paso a paso con múltiples secciones
-- **Ubicación**: `reports/builder/`
-
-### 4. **Composite** - Estructura Jerárquica
-- **Clases**: `ComponenteReporte`, `SeccionReporte`, `SubseccionReporte`
-- **Propósito**: Organizar reportes en secciones y subsecciones anidadas
-- **Ubicación**: `reports/composite/`
-
-### 5. **Decorator** - Seguridad Documental
-- **Clases**: `ReporteDecorator`, `MarcaAguaDecorator`, `FirmaDigitalDecorator`
-- **Propósito**: Añadir marca de agua y firma digital SHA-256
-- **Ubicación**: `reports/decorator/`
-
-### 6. **Facade** - Simplificación
-- **Clase**: `ReporteService`
-- **Propósito**: Ocultar toda la complejidad de generación de reportes en un solo método
-- **Ubicación**: `reports/services/ReporteService.java`
-
----
-
-## 🚀 Endpoints API
-
-### **Productos**
-```
-POST   /v1/productos                  - Crear producto
-GET    /v1/productos                  - Listar todos
-GET    /v1/productos/{id}             - Obtener por ID
-PUT    /v1/productos/{id}             - Actualizar
-DELETE /v1/productos/{id}             - Eliminar
-```
-
-### **Clientes**
-```
-POST   /v1/clientes                   - Crear cliente
-GET    /v1/clientes                   - Listar todos
-GET    /v1/clientes/{id}              - Obtener por ID
-GET    /v1/clientes/pais/{pais}       - Listar por país
-```
-
-### **Ventas**
-```
-POST   /v1/ventas                     - Registrar venta
-GET    /v1/ventas                     - Listar todas
-GET    /v1/ventas/{id}                - Obtener por ID
-GET    /v1/ventas/pais/{pais}         - Listar por país
-GET    /v1/ventas/fecha?inicio=...&fin=... - Listar por rango
-GET    /v1/ventas/total-euros         - Total consolidado en EUR
-```
-
-### **Reportes** (🎯 **FACADE**)
-```
-GET    /v1/reportes/mensual?mes=1&anio=2025
-GET    /v1/reportes/trimestral?trimestre=1&anio=2025
-GET    /v1/reportes/anual?anio=2025
-```
-
----
-
-## 📝 Ejemplos de Uso
-
-### 1. Registrar Producto Importado desde China
-
-**Request:**
-```json
-POST http://localhost:8080/v1/productos
-Content-Type: application/json
-
-{
-  "codigo": "LAP-001",
-  "nombre": "Laptop HP ProBook 450",
-  "descripcion": "Laptop empresarial Intel i5, 8GB RAM, 256GB SSD",
-  "categoriaProducto": "LAPTOP",
-  "monedaOrigen": "CNY",
-  "costoImportacionOrigen": 5000.00,
-  "stock": 500,
-  "proveedor": "Shenzhen Tech Ltd"
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "codigo": "LAP-001",
-  "nombre": "Laptop HP ProBook 450",
-  "descripcion": "Laptop empresarial Intel i5, 8GB RAM, 256GB SSD",
-  "categoriaProducto": "LAPTOP",
-  "monedaOrigen": "CNY",
-  "costoImportacionOrigen": 5000.00,
-  "costoImportacionCorp": 650.00,  // ✅ Conversión automática CNY → EUR
-  "stock": 500,
-  "proveedor": "Shenzhen Tech Ltd",
-  "fechaImportacion": "2025-01-03T10:30:00"
-}
-```
-
-### 2. Registrar Cliente
-
-**Request:**
-```json
-POST http://localhost:8080/v1/clientes
-Content-Type: application/json
-
-{
-  "nombre": "Corporación TechPeru S.A.",
-  "documento": "20123456789",
-  "telefono": "+51-987654321",
-  "pais": "PERU"
-}
-```
-
-### 3. Registrar Venta (Filial de Perú)
-
-**Request:**
-```json
-POST http://localhost:8080/v1/ventas
-Content-Type: application/json
-
-{
-  "numeroFactura": "F001-00001",
-  "cliente": {
-    "id": 1
-  },
-  "sales": [
-    {
-      "producto": {"id": 1},
-      "cantidad": 100,
-      "precioUnitario": 2500.00
-    }
-  ],
-  "metodoPago": "TRANSFERENCIA",
-  "monedaLocal": "PEN",
-  "vendedorResponsable": "Juan Pérez",
-  "paisFilial": "PERU"
-}
-```
-
-**Resultado:**
-- ✅ Stock actualizado automáticamente: 500 → 400
-- ✅ Total calculado: 250,000 PEN
-- ✅ Conversión automática a EUR para reportes corporativos
-
-### 4. Generar Reporte Mensual (🎯 **FACADE**)
-
-**Request:**
-```
-GET http://localhost:8080/v1/reportes/mensual?mes=1&anio=2025
-```
-
-**Response:**
-```
-╔════════════════════════════════════════════════════════════════════╗
-║                    *** CONFIDENCIAL ***                            ║
-║              FinanCorp S.A. - Documento Interno                    ║
-║           Prohibida su distribución no autorizada                  ║
-╚════════════════════════════════════════════════════════════════════╝
-
-═══════════════════════════════════════════════════════════════
-Reporte Mensual de Ingresos - FinanCorp S.A.
-Período: 01-2025
-═══════════════════════════════════════════════════════════════
-
-╔═══════════════════════════════════════════════════════════╗
-  REPORTE CONSOLIDADO FINANCIERO
-╚═══════════════════════════════════════════════════════════╝
-
-╔═══════════════════════════════════════════════════════════╗
-  RESUMEN EJECUTIVO
-╚═══════════════════════════════════════════════════════════╝
-
-  ▶ Período Analizado
-  ────────────────────────────────────────────────────────────
-    01/01/2025 - 31/01/2025
-
-  ▶ Total de Transacciones
-  ────────────────────────────────────────────────────────────
-    1 ventas registradas
-
-  ▶ Ingresos Totales (EUR)
-  ────────────────────────────────────────────────────────────
-    € 65000.00
-
-╔═══════════════════════════════════════════════════════════╗
-  INGRESOS POR PAÍS/FILIAL
-╚═══════════════════════════════════════════════════════════╝
-
-  ▶ PERU
-  ────────────────────────────────────────────────────────────
-    Total: € 65000.00 | Porcentaje: 100.0%
-
-═══ CONCLUSIONES ═══
-1. El período analizado registró un total de 1 transacciones.
-
-2. Los ingresos consolidados alcanzaron € 65000.00 (EUR - Moneda Corporativa).
-
-3. La filial con mayor actividad fue: PERU.
-
-4. El sistema SERF garantiza la consolidación automática de datos
-   en moneda corporativa (EUR) para facilitar la toma de decisiones.
-
-5. Todos los reportes generados incluyen firma digital y marca de agua
-   para garantizar la autenticidad e integridad del documento.
-
-═══════════════════════════════════════════════════════════════
-Documento generado automáticamente por SERF
-═══════════════════════════════════════════════════════════════
-
-╔════════════════════════════════════════════════════════════════════╗
-║                      FIRMA DIGITAL                                 ║
-╠════════════════════════════════════════════════════════════════════╣
-║  Algoritmo: SHA-256                                                ║
-║  Hash: A7B3C9D2E1F4G5H6I7J8K9L0M1N2O3P4Q5R6S7T8U9V0W1X2Y3Z4A5B6  ║
-║  Fecha de firma: 03-01-2025 14:30:45                               ║
-║  Firmante: Sistema SERF - FinanCorp S.A.                          ║
-║  Estado: VÁLIDO ✓                                                  ║
-╚════════════════════════════════════════════════════════════════════╝
-
-Este documento ha sido firmado digitalmente y cualquier modificación
-posterior invalidará la firma.
-```
-
----
-
-## 🔄 Flujo de Trabajo Completo
-
-### **Escenario Real: Importación y Venta**
-
-1. **Compras registra producto importado** (China → EUR)
-   ```
-   POST /v1/productos
-   - Costo: 5000 CNY
-   - Sistema convierte automáticamente: 650 EUR (Singleton)
-   ```
-
-2. **Filial Perú realiza venta** (PEN → EUR)
-   ```
-   POST /v1/ventas
-   - Precio: 250,000 PEN
-   - Stock actualizado automáticamente: 500 → 400
-   - Conversión para reportes: 65,000 EUR (Singleton)
-   ```
-
-3. **Gerencia solicita reporte mensual** (Facade)
-   ```
-   GET /v1/reportes/mensual?mes=1&anio=2025
-   ```
-   
-   **Internamente el sistema ejecuta:**
-   - ✅ **Prototype**: Clona plantilla mensual
-   - ✅ **Builder**: Construye reporte paso a paso
-   - ✅ **Composite**: Organiza secciones jerárquicamente
-   - ✅ **Decorator**: Añade marca de agua + firma digital SHA-256
-   - ✅ **Singleton**: Obtiene tasas de cambio y formato
-   - ✅ **Facade**: Expone todo en un solo método simple
-
----
-
-## 📊 Conversiones de Moneda (Singleton)
-
-| Moneda | Código | Tasa → EUR |
-|--------|--------|------------|
-| Yuan Chino | CNY | 0.13 |
-| Dólar USA | USD | 0.87 |
-| Sol Peruano | PEN | 0.26 |
-| Euro | EUR | 1.00 |
-
-**Ejemplo:**
-- 5000 CNY × 0.13 = **650 EUR**
-- 250,000 PEN × 0.26 = **65,000 EUR**
-
----
-
-## 🏗️ Estructura del Proyecto
+El proyecto está organizado en módulos independientes por dominio:
 
 ```
 src/main/java/com/parcial/test/
-├── TestApplication.java
-├── clients/
-│   ├── entities/Client.java
-│   ├── services/ClientService.java
-│   ├── services/ClientServiceImpl.java
-│   ├── controllers/ClientController.java
-│   └── ClienteRepo.java
-├── products/
-│   ├── entities/Product.java
-│   ├── entities/CategoriaProducto.java (enum)
-│   ├── entities/MonedaOrigen.java (enum)
-│   ├── services/ProductService.java
-│   ├── services/ProductServiceImpl.java
-│   ├── controllers/ProductController.java
-│   └── repository/ProductRepo.java
-├── sales/
-│   ├── entities/Sale.java
-│   ├── entities/SaleDetail.java
-│   ├── entities/MetodoPago.java (enum)
-│   ├── services/SaleService.java
-│   ├── services/SaleServiceImpl.java
-│   ├── controllers/SaleController.java
-│   └── repository/SalesRepo.java
-├── reports/
-│   ├── entities/
-│   │   ├── Report.java (Prototype)
-│   │   ├── Prototype.java (interface)
-│   │   └── PrototypesRegistry.java (Prototype Registry)
-│   ├── builder/
-│   │   ├── ReporteBuilder.java
-│   │   ├── ReporteBuilderImpl.java
-│   │   └── ReporteDTO.java
-│   ├── composite/
-│   │   ├── ComponenteReporte.java
-│   │   ├── SeccionReporte.java
-│   │   └── SubseccionReporte.java
-│   ├── decorator/
-│   │   ├── ReporteDecorator.java
-│   │   ├── ReporteBase.java
-│   │   ├── MarcaAguaDecorator.java
-│   │   └── FirmaDigitalDecorator.java
-│   ├── services/
-│   │   └── ReporteService.java (FACADE)
-│   └── controllers/
-│       └── ReporteController.java
-└── config/
-    ├── GlobalConfig.java (SINGLETON)
-    └── CurrencyConversionService.java (SINGLETON)
+├── clients/           # Gestión de clientes
+├── products/          # Catálogo de productos
+├── sales/             # Procesamiento de ventas
+├── reports/           # Generación de reportes
+├── config/            # Configuración global
+└── exceptions/        # Manejo centralizado de errores
 ```
 
----
+## Patrones de Diseño
 
-## ✅ Beneficios Implementados
+El sistema implementa varios patrones GoF para mantener el código limpio y escalable:
 
-✅ **Integración total** de inventarios, ventas y reportes
-✅ **Conversión automática** de monedas (Singleton)
-✅ **Actualización automática** de stock en ventas
-✅ **Seguridad documental** (Marca de agua + Firma SHA-256)
-✅ **Plantillas reutilizables** (Prototype)
-✅ **Construcción flexible** de reportes (Builder)
-✅ **Estructura jerárquica** (Composite)
-✅ **Decoración dinámica** (Decorator)
-✅ **Interfaz simplificada** (Facade)
+### Singleton
+La configuración global (`GlobalConfig`) se gestiona como singleton, manteniendo las tasas de cambio de monedas centralizadas. Esto evita inconsistencias cuando múltiples partes del sistema necesitan realizar conversiones.
 
----
+### Prototype
+Las plantillas de reportes se clonan en lugar de crearse desde cero. El `PrototypesRegistry` mantiene tres plantillas base (mensual, trimestral, anual) que se pueden duplicar y personalizar según necesidad.
 
-## 🔧 Configuración
+### Builder
+Construir un reporte completo puede involucrar muchos pasos: título, período, secciones, subsecciones, gráficos, conclusiones. El `ReporteBuilder` permite ir agregando estos elementos de forma fluida sin constructores complejos.
 
-### application.properties
+### Composite
+Los reportes tienen estructura jerárquica (secciones que contienen subsecciones). El patrón Composite permite tratarlos uniformemente: tanto `SeccionReporte` como `SubseccionReporte` implementan `ComponenteReporte`.
+
+### Decorator
+Para agregar seguridad a los reportes (marcas de agua, firmas digitales) sin modificar las clases originales, se usan decoradores que envuelven el contenido y añaden las capas necesarias.
+
+### Facade
+La complejidad de generar un reporte (obtener plantilla, construir estructura, agregar decoradores, persistir) se oculta tras una interfaz simple en `ReporteService`.
+
+### Chain of Responsibility
+El sistema de excepciones usa una cadena de handlers que procesan errores específicos. Si un handler no puede procesar una excepción, la pasa al siguiente en la cadena.
+
+## API REST
+
+### Productos
+- `POST /v1/productos` - Registrar nuevo producto
+- `GET /v1/productos` - Listar todos los productos
+- `GET /v1/productos/{id}` - Consultar producto específico
+- `PUT /v1/productos/{id}` - Actualizar datos
+- `DELETE /v1/productos/{id}` - Eliminar del catálogo
+
+### Clientes
+- `POST /v1/clients` - Crear cliente
+- `GET /v1/clients` - Listar clientes
+- `GET /v1/clients/{id}` - Obtener cliente por ID
+- `GET /v1/clients/pais/{pais}` - Filtrar por país
+- `DELETE /v1/clients/{id}` - Eliminar cliente
+
+### Ventas
+- `POST /v1/sales` - Registrar venta (actualiza stock automáticamente)
+- `GET /v1/sales` - Historial de ventas
+- `GET /v1/sales/{id}` - Detalle de venta
+- `GET /v1/sales/pais/{pais}` - Ventas por filial
+- `GET /v1/sales/fecha?inicio={fecha}&fin={fecha}` - Rango de fechas
+- `GET /v1/sales/total-euros` - Total consolidado en EUR
+
+### Reportes
+- `GET /v1/reportes` - Listar reportes generados
+- `GET /v1/reportes/{id}` - Obtener reporte específico
+- `POST /v1/reportes/generar` - Crear reporte personalizado
+- `GET /v1/reportes/plantillas` - Ver plantillas disponibles
+
+## Modelo de Datos
+
+### Product
+```java
+{
+  "codigo": "LAPTOP-001",
+  "nombre": "MacBook Pro 14",
+  "categoriaProducto": "LAPTOP",
+  "monedaOrigen": "USD",
+  "costoImportacionOrigen": 1999.99,
+  "stock": 50,
+  "proveedor": "Apple Inc."
+}
+```
+
+### Client
+```java
+{
+  "nombre": "Empresa XYZ S.A.",
+  "documento": "20123456789",
+  "telefono": "+51999888777",
+  "pais": "Peru"
+}
+```
+
+### Sale
+```java
+{
+  "numeroFactura": "FAC-2024-001",
+  "clienteId": 1,
+  "metodoPago": "TRANSFERENCIA",
+  "monedaLocal": "PEN",
+  "vendedorResponsable": "Juan Pérez",
+  "paisFilial": "Peru",
+  "sales": [
+    {
+      "productoId": 1,
+      "cantidad": 2,
+      "precioUnitario": 1999.99
+    }
+  ]
+}
+```
+
+## Conversión de Monedas
+
+El sistema maneja múltiples monedas y convierte todo a EUR (moneda corporativa):
+
+- **PEN → EUR**: 0.26
+- **USD → EUR**: 0.87
+- **CNY → EUR**: 0.13
+
+Las conversiones se aplican automáticamente al registrar productos y calcular totales de ventas.
+
+## Validaciones
+
+Todos los endpoints incluyen validaciones robustas:
+
+- Campos obligatorios no pueden ser nulos o vacíos
+- Costos deben ser positivos
+- Stock se verifica antes de procesar ventas
+- Fechas se validan (inicio < fin)
+- Las conversiones de moneda fallan si no existe tasa configurada
+
+## Gestión de Errores
+
+Las respuestas de error siguen un formato JSON consistente:
+
+```json
+{
+  "timestamp": "2025-11-04T15:30:00",
+  "status": 404,
+  "error": "Not Found",
+  "errorCode": "RESOURCE_NOT_FOUND",
+  "message": "Producto no encontrado con identificador: 123",
+  "path": "/v1/productos/123"
+}
+```
+
+Códigos de error implementados:
+- `RESOURCE_NOT_FOUND` (404) - Recurso no existe
+- `VALIDATION_ERROR` (400) - Datos inválidos
+- `BUSINESS_LOGIC_ERROR` (400) - Regla de negocio violada
+- `CONFIGURATION_ERROR` (500) - Error de configuración del sistema
+
+## Instalación y Ejecución
+
+```bash
+# Clonar repositorio
+git clone <repo-url>
+cd patronesParcial
+
+# Compilar proyecto
+mvn clean install
+
+# Ejecutar aplicación
+mvn spring-boot:run
+
+# La aplicación estará disponible en:
+# http://localhost:8080
+```
+
+## Documentación Swagger
+
+Una vez ejecutada la aplicación, la documentación interactiva está disponible en:
+
+```
+http://localhost:8080/swagger-ui.html
+```
+
+Desde ahí puedes probar todos los endpoints directamente desde el navegador.
+
+## Configuración
+
+El archivo `application.properties` contiene la configuración principal:
+
 ```properties
-# Base de datos
-spring.datasource.url=jdbc:postgresql://localhost:5432/serf_db
-spring.datasource.username=postgres
-spring.datasource.password=password
+# Base de datos H2 (en memoria)
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.h2.console.enabled=true
+
+# JPA
+spring.jpa.show-sql=true
 spring.jpa.hibernate.ddl-auto=update
 
-# Configuración SERF
-serf.config.moneda-corporativa=EUR
+# Puerto
+server.port=8080
 ```
 
+## Frontend
+
+El proyecto incluye un frontend simple en `/frontend`:
+
+- `index.html` - Dashboard principal
+- `pages/clientes.html` - Gestión de clientes
+- `pages/productos.html` - Catálogo de productos
+- `pages/ventas.html` - Registro de ventas
+- `pages/reportes.html` - Generación de reportes
+
+Para usarlo, simplemente abre `index.html` en un navegador después de iniciar el backend.
+
+## Diagramas UML
+
+El directorio raíz contiene diagramas Mermaid (.mmd) y SVG de la arquitectura:
+
+- `diagrama_entidades.mmd` - Modelo de dominio completo
+- `patron_prototype.mmd` - Implementación del patrón Prototype
+- `patron_builder.mmd` - Implementación del patrón Builder
+- `patron_composite.mmd` - Estructura de reportes
+- `patron_decorator.mmd` - Decoradores de seguridad
+- `patron_singleton.mmd` - Configuración global
+- `patron_facade.mmd` - Fachada de servicios
+- `patron_chain_of_responsibility.mmd` - Manejo de excepciones
+- `patron_exception_hierarchy.mmd` - Jerarquía de errores
+
+Estos se pueden visualizar en [mermaid.live](https://mermaid.live) o con plugins de IDE.
+
+## Testing
+
+```bash
+# Ejecutar tests unitarios
+mvn test
+
+# Ejecutar tests con cobertura
+mvn test jacoco:report
+```
+
+## Estructura de Paquetes
+
+```
+com.parcial.test
+├── clients
+│   ├── entities/          # Client.java
+│   ├── controllers/       # ClientController.java
+│   ├── services/          # ClientService, ClientServiceImpl
+│   └── ClienteRepo.java
+├── products
+│   ├── entities/          # Product, CategoriaProducto, MonedaOrigen
+│   ├── controllers/       # ProductController
+│   ├── services/          # ProductService, ProductServiceImpl
+│   └── repository/        # ProductRepo
+├── sales
+│   ├── entities/          # Sale, SaleDetail, MetodoPago
+│   ├── controllers/       # SaleController
+│   ├── services/          # SaleService, SaleServiceImpl
+│   ├── repository/        # SalesRepo
+│   └── dto/               # SaleDTO
+├── reports
+│   ├── entities/          # Report, Prototype, PrototypesRegistry
+│   ├── builder/           # ReporteBuilder, ReporteBuilderImpl, ReporteDTO
+│   ├── composite/         # ComponenteReporte, SeccionReporte, SubseccionReporte
+│   ├── decorator/         # ReporteDecorator, FirmaDigitalDecorator, MarcaAguaDecorator
+│   ├── controllers/       # ReportController
+│   ├── services/          # ReportService
+│   └── repository/        # ReportRepo
+├── config
+│   ├── GlobalConfig.java
+│   ├── CurrencyConversionService.java
+│   ├── CorsConfig.java
+│   └── SwaggerConfig.java
+└── exceptions
+    ├── BaseException.java
+    ├── ResourceNotFoundException.java
+    ├── BusinessLogicException.java
+    ├── ValidationException.java
+    ├── ConfigurationException.java
+    ├── ReportGenerationException.java
+    ├── dto/
+    │   └── ErrorResponse.java
+    └── handler/
+        ├── ExceptionHandler.java
+        ├── AbstractExceptionHandler.java
+        ├── BaseExceptionHandler.java
+        ├── ValidationExceptionHandler.java
+        ├── IllegalArgumentExceptionHandler.java
+        └── GlobalExceptionHandler.java
+```
+
+## Contribuir
+
+Si encuentras algún bug o tienes sugerencias:
+
+1. Abre un issue describiendo el problema
+2. Si tienes una solución, crea un pull request
+3. Asegúrate de que los tests pasen antes de enviar
+
+## Licencia
+
+Este proyecto es privado y pertenece a FinanCorp S.A.
+
 ---
 
-## 🧪 Pruebas Recomendadas
-
-1. **Crear 5 productos** de diferentes categorías
-2. **Crear 3 clientes** de diferentes países
-3. **Registrar 10 ventas** en distintas fechas y países
-4. **Generar reporte mensual** y verificar:
-   - Marca de agua presente
-   - Firma digital SHA-256
-   - Conversión correcta a EUR
-   - Secciones jerárquicas (Composite)
-
----
-
-## 👨‍💻 Autor
-**Sistema SERF - FinanCorp S.A.**
-Implementado con Spring Boot + JPA + Lombok
-Patrones de diseño: Singleton, Prototype, Builder, Composite, Decorator, Facade
-
+Desarrollado como parte del sistema de gestión empresarial de FinanCorp S.A.

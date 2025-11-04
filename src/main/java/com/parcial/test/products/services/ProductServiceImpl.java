@@ -1,6 +1,9 @@
 package com.parcial.test.products.services;
 
 import com.parcial.test.config.CurrencyConversionService;
+import com.parcial.test.exceptions.ResourceNotFoundException;
+import com.parcial.test.exceptions.ValidationException;
+import com.parcial.test.exceptions.BusinessLogicException;
 import com.parcial.test.products.entities.Product;
 import com.parcial.test.products.repository.ProductRepo;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +20,18 @@ public class ProductServiceImpl implements ProductService {
 
   @Override
   public Product save(Product product) {
-    Double montoCorporativo= currencyConversionService.convertirAMonedaCorporativa(product.getCostoImportacionOrigen(), product.getMonedaOrigen());
-    product.setCostoImportacionCorp(montoCorporativo);
-    return productRepo.save(product);
+    validateProduct(product);
+
+    try {
+      Double montoCorporativo = currencyConversionService.convertirAMonedaCorporativa(
+          product.getCostoImportacionOrigen(),
+          product.getMonedaOrigen()
+      );
+      product.setCostoImportacionCorp(montoCorporativo);
+      return productRepo.save(product);
+    } catch (IllegalArgumentException e) {
+      throw new BusinessLogicException("Error al convertir moneda: " + e.getMessage(), e);
+    }
   }
 
   @Override
@@ -29,11 +41,10 @@ public class ProductServiceImpl implements ProductService {
 
   @Override
   public Product update(Long id, Product product) {
-    Product updatedProduct=getById(id);
+    Product updatedProduct = productRepo.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Producto", String.valueOf(id)));
 
-    if (updatedProduct == null) {
-      throw new RuntimeException("Producto no encontrado con ID: " + id);
-    }
+    validateProduct(product);
 
     updatedProduct.setNombre(product.getNombre());
     updatedProduct.setDescripcion(product.getDescripcion());
@@ -44,23 +55,49 @@ public class ProductServiceImpl implements ProductService {
     updatedProduct.setStock(product.getStock());
     updatedProduct.setProveedor(product.getProveedor());
 
-    // Recalcular el costo corporativo con la conversión de moneda
-    Double montoCorporativo = currencyConversionService.convertirAMonedaCorporativa(
-        product.getCostoImportacionOrigen(),
-        product.getMonedaOrigen()
-    );
-    updatedProduct.setCostoImportacionCorp(montoCorporativo);
+    try {
+      // Recalcular el costo corporativo con la conversión de moneda
+      Double montoCorporativo = currencyConversionService.convertirAMonedaCorporativa(
+          product.getCostoImportacionOrigen(),
+          product.getMonedaOrigen()
+      );
+      updatedProduct.setCostoImportacionCorp(montoCorporativo);
+    } catch (IllegalArgumentException e) {
+      throw new BusinessLogicException("Error al convertir moneda: " + e.getMessage(), e);
+    }
 
     return productRepo.save(updatedProduct);
   }
 
   @Override
   public Product getById(Long id) {
-    return productRepo.findById(id).orElse(null);
+    return productRepo.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Producto", String.valueOf(id)));
   }
 
   @Override
   public void delete(Long id) {
+    if (!productRepo.existsById(id)) {
+      throw new ResourceNotFoundException("Producto", String.valueOf(id));
+    }
     productRepo.deleteById(id);
+  }
+
+  private void validateProduct(Product product) {
+    if (product.getNombre() == null || product.getNombre().trim().isEmpty()) {
+      throw new ValidationException("nombre", "El nombre es obligatorio");
+    }
+    if (product.getCodigo() == null || product.getCodigo().trim().isEmpty()) {
+      throw new ValidationException("codigo", "El código es obligatorio");
+    }
+    if (product.getCategoriaProducto() == null) {
+      throw new ValidationException("categoriaProducto", "La categoría es obligatoria");
+    }
+    if (product.getMonedaOrigen() == null) {
+      throw new ValidationException("monedaOrigen", "La moneda de origen es obligatoria");
+    }
+    if (product.getCostoImportacionOrigen() == null || product.getCostoImportacionOrigen() <= 0) {
+      throw new ValidationException("costoImportacionOrigen", "El costo debe ser mayor a 0");
+    }
   }
 }

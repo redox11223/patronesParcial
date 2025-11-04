@@ -2,6 +2,8 @@ package com.parcial.test.clients.services;
 
 import com.parcial.test.clients.entities.Client;
 import com.parcial.test.clients.ClienteRepo;
+import com.parcial.test.exceptions.ResourceNotFoundException;
+import com.parcial.test.exceptions.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public Client save(Client client) {
+        validateClient(client);
         return clienteRepo.save(client);
     }
 
@@ -26,20 +29,35 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Client getById(Long id) {
         return clienteRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente", String.valueOf(id)));
     }
 
     @Override
     public List<Client> getByPais(String pais) {
+        if (pais == null || pais.trim().isEmpty()) {
+            throw new ValidationException("pais", "El país no puede estar vacío");
+        }
         return clienteRepo.findByPais(pais);
     }
 
     @Override
     public void delete(Long id) {
         if (!clienteRepo.existsById(id)) {
-            throw new RuntimeException("Cliente no encontrado: " + id);
+            throw new ResourceNotFoundException("Cliente", String.valueOf(id));
         }
         clienteRepo.deleteById(id);
+    }
+
+    private void validateClient(Client client) {
+        if (client.getNombre() == null || client.getNombre().trim().isEmpty()) {
+            throw new ValidationException("nombre", "El nombre es obligatorio");
+        }
+        if (client.getDocumento() == null || client.getDocumento().trim().isEmpty()) {
+            throw new ValidationException("documento", "El documento es obligatorio");
+        }
+        if (client.getPais() == null || client.getPais().trim().isEmpty()) {
+            throw new ValidationException("pais", "El país es obligatorio");
+        }
     }
 }
 

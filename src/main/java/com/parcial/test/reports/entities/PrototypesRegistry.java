@@ -50,7 +50,7 @@ public class PrototypesRegistry {
     public Prototype obtenerPlantilla(String tipo) {
         Prototype plantilla = plantillas.get(tipo.toUpperCase());
         if (plantilla == null) {
-            throw new IllegalArgumentException("No existe plantilla para el tipo: " + tipo);
+            throw new com.parcial.test.exceptions.ResourceNotFoundException("Plantilla de reporte", tipo);
         }
         return plantilla.clone();
     }
