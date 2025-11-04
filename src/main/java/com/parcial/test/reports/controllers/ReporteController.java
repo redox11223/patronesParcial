@@ -67,5 +67,32 @@ public class ReporteController {
                 .headers(headers)
                 .body(reporte);
     }
+
+    @GetMapping("/productos-stock")
+    public ResponseEntity<?> generarReporteProductosStock() {
+        var productos = reporteService.generarReporteProductosStock();
+        return ResponseEntity.ok(productos);
+    }
+
+    @GetMapping("/clientes-activos")
+    public ResponseEntity<?> generarReporteClientesActivos() {
+        var clientes = reporteService.generarReporteClientesActivos();
+        return ResponseEntity.ok(clientes);
+    }
+
+    @GetMapping("/ventas-mensuales")
+    public ResponseEntity<?> generarReporteVentasMensuales() {
+        var ventas = reporteService.obtenerVentasMensuales();
+        // Convertir a DTOs para el frontend
+        var ventasDTO = ventas.stream()
+                .map(venta -> {
+                    if (venta.getClienteId() == null && venta.getCliente() != null) {
+                        venta.setClienteId(venta.getCliente().getId());
+                    }
+                    return com.parcial.test.sales.dto.SaleDTO.fromEntity(venta);
+                })
+                .collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(ventasDTO);
+    }
 }
 

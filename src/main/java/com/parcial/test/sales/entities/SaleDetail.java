@@ -21,11 +21,16 @@ public class SaleDetail {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "id_venta",nullable = false)
+  @com.fasterxml.jackson.annotation.JsonIgnore
   private Sale venta;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "id_producto",nullable = false)
+  @com.fasterxml.jackson.annotation.JsonIgnore
   private Product producto;
+
+  @Transient
+  private Long productoId;
 
   @Column(nullable = false)
   private Integer cantidad;

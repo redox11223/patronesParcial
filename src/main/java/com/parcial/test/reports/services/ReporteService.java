@@ -34,6 +34,7 @@ public class ReporteService {
     private final SaleService saleService;
     private final ProductService productService;
     private final CurrencyConversionService currencyConversionService;
+    private final com.parcial.test.clients.services.ClientService clientService;
 
     /**
      * Patrón FACADE: Este método oculta toda la complejidad de generación de reportes
@@ -255,6 +256,44 @@ public class ReporteService {
         conclusiones.append("   para garantizar la autenticidad e integridad del documento.\n");
 
         return conclusiones.toString();
+    }
+
+    /**
+     * Generar reporte de productos en stock
+     */
+    public List<Product> generarReporteProductosStock() {
+        return productService.getAll();
+    }
+
+    /**
+     * Generar reporte de clientes activos
+     */
+    public List<com.parcial.test.clients.entities.Client> generarReporteClientesActivos() {
+        return clientService.getAll();
+    }
+
+    /**
+     * Obtener ventas del mes actual para el frontend
+     */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<Sale> obtenerVentasMensuales() {
+        java.time.LocalDate hoy = java.time.LocalDate.now();
+        java.time.LocalDate inicio = hoy.withDayOfMonth(1);
+        java.time.LocalDate fin = hoy.withDayOfMonth(hoy.lengthOfMonth());
+
+        // Usar getAll que carga todas las relaciones, y luego filtrar por fecha
+        List<Sale> todasLasVentas = saleService.getAll();
+
+        // Filtrar por rango de fechas
+        java.time.ZoneId zoneId = java.time.ZoneId.systemDefault();
+        java.util.Date fechaInicio = java.util.Date.from(inicio.atStartOfDay(zoneId).toInstant());
+        java.util.Date fechaFin = java.util.Date.from(fin.atTime(23, 59, 59).atZone(zoneId).toInstant());
+
+        return todasLasVentas.stream()
+                .filter(venta -> venta.getFechaVenta() != null &&
+                        !venta.getFechaVenta().before(fechaInicio) &&
+                        !venta.getFechaVenta().after(fechaFin))
+                .collect(java.util.stream.Collectors.toList());
     }
 }
 

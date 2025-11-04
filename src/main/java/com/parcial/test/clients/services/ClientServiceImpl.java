@@ -33,5 +33,13 @@ public class ClientServiceImpl implements ClientService {
     public List<Client> getByPais(String pais) {
         return clienteRepo.findByPais(pais);
     }
+
+    @Override
+    public void delete(Long id) {
+        if (!clienteRepo.existsById(id)) {
+            throw new RuntimeException("Cliente no encontrado: " + id);
+        }
+        clienteRepo.deleteById(id);
+    }
 }
 

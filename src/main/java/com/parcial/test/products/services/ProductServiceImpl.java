@@ -30,14 +30,27 @@ public class ProductServiceImpl implements ProductService {
   @Override
   public Product update(Long id, Product product) {
     Product updatedProduct=getById(id);
+
+    if (updatedProduct == null) {
+      throw new RuntimeException("Producto no encontrado con ID: " + id);
+    }
+
     updatedProduct.setNombre(product.getNombre());
     updatedProduct.setDescripcion(product.getDescripcion());
     updatedProduct.setCodigo(product.getCodigo());
     updatedProduct.setMonedaOrigen(product.getMonedaOrigen());
     updatedProduct.setCategoriaProducto(product.getCategoriaProducto());
     updatedProduct.setCostoImportacionOrigen(product.getCostoImportacionOrigen());
-    updatedProduct.setCostoImportacionCorp(product.getCostoImportacionCorp());
     updatedProduct.setStock(product.getStock());
+    updatedProduct.setProveedor(product.getProveedor());
+
+    // Recalcular el costo corporativo con la conversión de moneda
+    Double montoCorporativo = currencyConversionService.convertirAMonedaCorporativa(
+        product.getCostoImportacionOrigen(),
+        product.getMonedaOrigen()
+    );
+    updatedProduct.setCostoImportacionCorp(montoCorporativo);
+
     return productRepo.save(updatedProduct);
   }
 

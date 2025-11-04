@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - SERF</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+<nav class="navbar">
+    <h1>📄 Generación de Reportes</h1>
+    <ul>
+        <li><a href="../index.html">🏠 Inicio</a></li>
+        <li><a href="productos.html">📦 Productos</a></li>
+        <li><a href="clientes.html">👥 Clientes</a></li>
+        <li><a href="ventas.html">💰 Ventas</a></li>
+        <li><a href="reportes.html">📄 Reportes</a></li>
+    </ul>
+</nav>
+
+<main class="container">
+    <h2>Generar Reporte de Ventas</h2>
+
+    <div class="form-container">
+        <form id="reporteForm" onsubmit="generarReporte(event)">
+            <div class="form-group">
+                <label>Tipo de Reporte:</label>
+                <select id="tipoReporte" required>
+                    <option value="ventas-mensuales">Ventas Mensuales</option>
+                    <option value="productos-stock">Productos en Stock</option>
+                    <option value="clientes-activos">Clientes Activos</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="conMarcaAgua">
+                    Incluir Marca de Agua
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="conFirmaDigital">
+                    Incluir Firma Digital
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-success">📄 Generar Reporte</button>
+            <button type="button" class="btn" onclick="probarReporte()" style="background: #ffc107; margin-left: 10px;">🧪 Probar Display</button>
+        </form>
+    </div>
+
+    <div id="reporteResultado" style="display: none; margin-top: 2rem;">
+        <h3>Reporte Generado</h3>
+        <pre id="reporteContenido" class="reporte-preview"></pre>
+    </div>
+</main>
+
+<script src="../js/api.js"></script>
+<script src="../js/reportes.js"></script>
+</body>
+</html>

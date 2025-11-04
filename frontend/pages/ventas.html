@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ventas - SERF</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+<nav class="navbar">
+    <h1>💰 Gestión de Ventas</h1>
+    <ul>
+        <li><a href="../index.html">🏠 Inicio</a></li>
+        <li><a href="productos.html">📦 Productos</a></li>
+        <li><a href="clientes.html">👥 Clientes</a></li>
+        <li><a href="ventas.html">💰 Ventas</a></li>
+        <li><a href="reportes.html">📄 Reportes</a></li>
+    </ul>
+</nav>
+
+<main class="container">
+    <h2>Registrar Nueva Venta</h2>
+
+    <div class="form-container">
+        <form id="ventaForm" onsubmit="guardarVenta(event)">
+            <div class="form-group">
+                <label>Cliente:</label>
+                <select id="clienteId" required>
+                    <option value="">Seleccione un cliente...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Producto:</label>
+                <select id="productoId" required onchange="actualizarPrecio()">
+                    <option value="">Seleccione un producto...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Cantidad:</label>
+                <input type="number" id="cantidad" required min="1" onchange="calcularTotal()">
+            </div>
+
+            <div class="form-group">
+                <label>Precio Unitario:</label>
+                <input type="text" id="precioUnitario" readonly>
+            </div>
+
+            <div class="form-group">
+                <label>Total:</label>
+                <input type="text" id="montoTotal" readonly>
+            </div>
+
+            <button type="submit" class="btn btn-success">💾 Registrar Venta</button>
+        </form>
+    </div>
+
+    <h2 style="margin-top: 2rem;">Historial de Ventas</h2>
+    <div id="ventasTable" class="table-container">
+        <p class="loading">Cargando ventas...</p>
+    </div>
+</main>
+
+<script src="../js/api.js"></script>
+<script src="../js/ventas.js"></script>
+</body>
+</html>

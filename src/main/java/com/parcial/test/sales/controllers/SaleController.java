@@ -19,9 +19,19 @@ public class SaleController {
     private final SaleService saleService;
 
     @GetMapping
-    public ResponseEntity<List<Sale>> getAllSales() {
+    public ResponseEntity<List<com.parcial.test.sales.dto.SaleDTO>> getAllSales() {
         List<Sale> sales = saleService.getAll();
-        return ResponseEntity.ok(sales);
+        // Convertir a DTOs con toda la información necesaria
+        List<com.parcial.test.sales.dto.SaleDTO> saleDTOs = sales.stream()
+                .map(sale -> {
+                    // Asegurar que clienteId esté disponible
+                    if (sale.getClienteId() == null && sale.getCliente() != null) {
+                        sale.setClienteId(sale.getCliente().getId());
+                    }
+                    return com.parcial.test.sales.dto.SaleDTO.fromEntity(sale);
+                })
+                .collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(saleDTOs);
     }
 
     @GetMapping("/{id}")
@@ -53,6 +63,16 @@ public class SaleController {
     @PostMapping
     public ResponseEntity<Sale> saveSale(@RequestBody Sale sale) {
         Sale newSale = saleService.save(sale);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newSale);
+    }
+
+    @PostMapping("/simple")
+    public ResponseEntity<Sale> createSimpleSale(@RequestBody com.parcial.test.sales.dto.VentaSimpleRequest request) {
+        Sale newSale = saleService.crearVentaSimple(
+            request.getClienteId(),
+            request.getProductoId(),
+            request.getCantidad()
+        );
         return ResponseEntity.status(HttpStatus.CREATED).body(newSale);
     }
 }
