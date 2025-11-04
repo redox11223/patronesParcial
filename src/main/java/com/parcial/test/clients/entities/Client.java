@@ -34,6 +34,7 @@ public class Client {
   @ToString.Exclude
   @EqualsAndHashCode.Exclude
   @Builder.Default
+  @com.fasterxml.jackson.annotation.JsonIgnore
   private List<Sale> ventas=new ArrayList<>();
 
   public void agregarVenta(Sale venta){

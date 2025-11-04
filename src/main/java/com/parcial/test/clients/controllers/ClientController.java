@@ -39,6 +39,20 @@ public class ClientController {
         Client newClient = clientService.save(client);
         return ResponseEntity.status(HttpStatus.CREATED).body(newClient);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Client> updateClient(@PathVariable Long id, @RequestBody Client client) {
+        // Asegurar que el ID del cliente corresponde al de la URL
+        client.setId(id);
+        Client updatedClient = clientService.save(client);
+        return ResponseEntity.ok(updatedClient);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteClient(@PathVariable Long id) {
+        clientService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }
 
 

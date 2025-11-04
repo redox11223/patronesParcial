@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos - SERF</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+<nav class="navbar">
+    <h1>📦 Gestión de Productos</h1>
+    <ul>
+        <li><a href="../index.html">🏠 Inicio</a></li>
+        <li><a href="productos.html">📦 Productos</a></li>
+        <li><a href="clientes.html">👥 Clientes</a></li>
+        <li><a href="ventas.html">💰 Ventas</a></li>
+        <li><a href="reportes.html">📄 Reportes</a></li>
+    </ul>
+</nav>
+
+<main class="container">
+    <div class="header-section">
+        <h2>Lista de Productos</h2>
+        <div class="button-group">
+            <button class="btn" onclick="cargarProductos()">🔄 Actualizar</button>
+            <button class="btn btn-success" onclick="mostrarFormularioNuevo()">➕ Nuevo Producto</button>
+        </div>
+    </div>
+
+    <!-- Formulario para crear/editar producto -->
+    <div id="formularioProducto" class="form-container" style="display: none;">
+        <h3 id="tituloFormulario">Nuevo Producto</h3>
+        <form id="productoForm" onsubmit="guardarProducto(event)">
+            <input type="hidden" id="productoId">
+
+            <div class="form-group">
+                <label>Código del Producto:</label>
+                <input type="text" id="codigoProducto" required>
+            </div>
+
+            <div class="form-group">
+                <label>Nombre del Producto:</label>
+                <input type="text" id="nombreProducto" required>
+            </div>
+
+            <div class="form-group">
+                <label>Descripción:</label>
+                <input type="text" id="descripcionProducto">
+            </div>
+
+            <div class="form-group">
+                <label>Cantidad en Stock:</label>
+                <input type="number" id="cantidadStock" required min="0">
+            </div>
+
+            <div class="form-group">
+                <label>Costo Importacion (und):</label>
+                <input type="number" id="precioUnitario" required step="0.01" min="0">
+            </div>
+
+            <div class="form-group">
+                <label>Categoría:</label>
+                <select id="categoriaProducto" required>
+                    <option value="LAPTOP">Laptop</option>
+                    <option value="SMARTPHONE">Smartphone</option>
+                    <option value="ACCESORIO">Accesorio</option>
+                    <option value="TABLET">Tablet</option>
+                    <option value="EQUIPO_RED">Equipo de Red</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Moneda de Origen:</label>
+                <select id="monedaOrigen" required>
+                    <option value="CNY">CNY (Yuan Chino)</option>
+                    <option value="USD">USD (Dólar)</option>
+                    <option value="EUR">EUR (Euro)</option>
+                    <option value="PEN">PEN (Sol Peruano)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Proveedor:</label>
+                <input type="text" id="proveedor" required>
+            </div>
+
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-success">💾 Guardar</button>
+                <button type="button" class="btn btn-secondary" onclick="cancelarFormulario()">❌ Cancelar</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla de productos -->
+    <div id="productosTable" class="table-container">
+        <p class="loading">Cargando productos...</p>
+    </div>
+</main>
+
+<script src="../js/api.js"></script>
+<script src="../js/productos.js"></script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - SERF</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+<nav class="navbar">
+    <h1>📄 Generación de Reportes</h1>
+    <ul>
+        <li><a href="../index.html">🏠 Inicio</a></li>
+        <li><a href="productos.html">📦 Productos</a></li>
+        <li><a href="clientes.html">👥 Clientes</a></li>
+        <li><a href="ventas.html">💰 Ventas</a></li>
+        <li><a href="reportes.html">📄 Reportes</a></li>
+    </ul>
+</nav>
+
+<main class="container">
+    <h2>Generar Reporte de Ventas</h2>
+
+    <div class="form-container">
+        <form id="reporteForm" onsubmit="generarReporte(event)">
+            <div class="form-group">
+                <label>Tipo de Reporte:</label>
+                <select id="tipoReporte" required onchange="mostrarParametrosReporte()">
+                    <option value="ventas-mensuales">Ventas Mensuales</option>
+                    <option value="productos-stock">Productos en Stock</option>
+                    <option value="clientes-activos">Clientes Activos</option>
+                    <option value="reporte-trimestral">Reporte Trimestral de Gastos e Ingresos</option>
+                    <option value="reporte-anual">Reporte Anual Consolidado</option>
+                </select>
+            </div>
+
+            <div id="parametrosTrimestre" class="form-group" style="display: none;">
+                <label>Trimestre:</label>
+                <select id="trimestre">
+                    <option value="1">Q1 (Enero - Marzo)</option>
+                    <option value="2">Q2 (Abril - Junio)</option>
+                    <option value="3">Q3 (Julio - Septiembre)</option>
+                    <option value="4">Q4 (Octubre - Diciembre)</option>
+                </select>
+                <label>Año:</label>
+                <input type="number" id="anioTrimestre" min="2020" max="2030" value="2025">
+            </div>
+
+            <div id="parametrosAnual" class="form-group" style="display: none;">
+                <label>Año:</label>
+                <input type="number" id="anioAnual" min="2020" max="2030" value="2025">
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="conMarcaAgua">
+                    Incluir Marca de Agua
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="conFirmaDigital">
+                    Incluir Firma Digital
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-success">📄 Generar Reporte</button>
+            <button type="button" class="btn" onclick="probarReporte()" style="background: #ffc107; margin-left: 10px;">🧪 Probar Display</button>
+        </form>
+    </div>
+
+    <div id="reporteResultado" style="display: none; margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3>Reporte Generado</h3>
+            <button onclick="exportarAPDF()" class="btn" style="background: #dc3545; color: white;">
+                📄 Exportar a PDF
+            </button>
+        </div>
+        <pre id="reporteContenido" class="reporte-preview"></pre>
+    </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/reportes.js"></script>
+</body>
+</html>

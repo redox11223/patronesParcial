@@ -12,5 +12,6 @@ public interface SaleService {
     List<Sale> getByPais(String pais);
     List<Sale> getByFecha(LocalDate inicio, LocalDate fin);
     Double getTotalVentasEnEuros();
+    Sale crearVentaSimple(Long clienteId, Long productoId, Integer cantidad);
 }
 

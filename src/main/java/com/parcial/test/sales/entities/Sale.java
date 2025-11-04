@@ -24,8 +24,13 @@ public class Sale {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(nullable = false,name = "cliente_id")
+  @com.fasterxml.jackson.annotation.JsonIgnore
   private Client cliente;
 
+  @Transient
+  private Long clienteId;
+
+  @com.fasterxml.jackson.annotation.JsonIgnore
   @OneToMany(mappedBy = "venta",cascade = CascadeType.ALL,orphanRemoval = true)
   @ToString.Exclude
   @EqualsAndHashCode.Exclude
@@ -44,7 +49,7 @@ public class Sale {
   private String vendedorResponsable;
 
   @Column(nullable = false)
-  private Double MontoTotal;
+  private Double montoTotal;
 
   @Column(nullable = false, length = 50)
   private String paisFilial;
@@ -65,7 +70,7 @@ public class Sale {
   }
 
   public void calcularMontoTotal(){
-    this.MontoTotal = sales.stream()
+    this.montoTotal = sales.stream()
             .mapToDouble(detalle -> {
                 // Calcular subtotal si es nulo
                 if (detalle.getSubtotal() == null && detalle.getCantidad() != null && detalle.getPrecioUnitario() != null) {

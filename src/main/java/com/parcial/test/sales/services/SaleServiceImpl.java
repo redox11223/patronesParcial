@@ -22,6 +22,7 @@ public class SaleServiceImpl implements SaleService {
     private final SalesRepo salesRepo;
     private final ProductRepo productRepo;
     private final CurrencyConversionService currencyConversionService;
+    private final com.parcial.test.clients.ClienteRepo clienteRepo;
 
     @Override
     @Transactional
@@ -55,8 +56,10 @@ public class SaleServiceImpl implements SaleService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Sale> getAll() {
-        return salesRepo.findAll();
+        // Usar el método que carga todas las relaciones con JOIN FETCH
+        return salesRepo.findAllWithDetails();
     }
 
     @Override
@@ -86,6 +89,62 @@ public class SaleServiceImpl implements SaleService {
                         sale.getMonedaLocal()
                 ))
                 .sum();
+    }
+
+    @Override
+    @Transactional
+    public Sale crearVentaSimple(Long clienteId, Long productoId, Integer cantidad) {
+        // Buscar cliente
+        com.parcial.test.clients.entities.Client cliente = clienteRepo.findById(clienteId)
+                .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + clienteId));
+
+        // Buscar producto
+        Product producto = productRepo.findById(productoId)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + productoId));
+
+        // Verificar stock
+        if (!producto.haystock(cantidad)) {
+            throw new IllegalStateException(
+                "Stock insuficiente para producto: " + producto.getNombre() +
+                ". Disponible: " + producto.getStock() +
+                ", Solicitado: " + cantidad
+            );
+        }
+
+        // Obtener precio del producto (usar costo corporativo o el de origen)
+        Double precio = producto.getCostoImportacionCorp() != null ?
+                        producto.getCostoImportacionCorp() :
+                        producto.getCostoImportacionOrigen();
+
+        // Crear detalle de venta
+        SaleDetail detalle = SaleDetail.crear(producto, cantidad, precio);
+
+        // Crear venta
+        Sale venta = Sale.builder()
+                .numeroFactura("FAC-" + System.currentTimeMillis())
+                .cliente(cliente)
+                .metodoPago(com.parcial.test.sales.entities.MetodoPago.EFECTIVO)
+                .monedaLocal(producto.getMonedaOrigen())
+                .vendedorResponsable("Sistema")
+                .paisFilial(cliente.getPais())
+                .fechaVenta(new Date())
+                .build();
+
+        // Agregar detalle a la venta
+        venta.AgregarDetalle(detalle);
+
+        // Disminuir stock
+        producto.disminuirStock(cantidad);
+        productRepo.save(producto);
+
+        // Calcular total y guardar
+        venta.calcularMontoTotal();
+        Sale ventaGuardada = salesRepo.save(venta);
+
+        // Establecer clienteId para el frontend
+        ventaGuardada.setClienteId(clienteId);
+
+        return ventaGuardada;
     }
 }
 

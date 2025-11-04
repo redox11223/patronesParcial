@@ -67,5 +67,60 @@ public class ReporteController {
                 .headers(headers)
                 .body(reporte);
     }
+
+    @GetMapping("/productos-stock")
+    public ResponseEntity<?> generarReporteProductosStock() {
+        var productos = reporteService.generarReporteProductosStock();
+        return ResponseEntity.ok(productos);
+    }
+
+    @GetMapping("/clientes-activos")
+    public ResponseEntity<?> generarReporteClientesActivos() {
+        var clientes = reporteService.generarReporteClientesActivos();
+        return ResponseEntity.ok(clientes);
+    }
+
+    @GetMapping("/ventas-mensuales")
+    public ResponseEntity<?> generarReporteVentasMensuales() {
+        var ventas = reporteService.obtenerVentasMensuales();
+        // Convertir a DTOs para el frontend
+        var ventasDTO = ventas.stream()
+                .map(venta -> {
+                    if (venta.getClienteId() == null && venta.getCliente() != null) {
+                        venta.setClienteId(venta.getCliente().getId());
+                    }
+                    return com.parcial.test.sales.dto.SaleDTO.fromEntity(venta);
+                })
+                .collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(ventasDTO);
+    }
+
+    @GetMapping("/reporte-trimestral")
+    public ResponseEntity<String> generarReporteTrimestralTexto(
+            @RequestParam int trimestre,
+            @RequestParam int anio) {
+
+        String reporte = reporteService.generarReporteTrimestral(trimestre, anio);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(reporte);
+    }
+
+    @GetMapping("/reporte-anual")
+    public ResponseEntity<String> generarReporteAnualTexto(@RequestParam int anio) {
+
+        String reporte = reporteService.generarReporteAnual(anio);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(reporte);
+    }
 }
 

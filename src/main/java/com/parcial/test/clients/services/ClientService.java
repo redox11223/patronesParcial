@@ -9,4 +9,5 @@ public interface ClientService {
     List<Client> getAll();
     Client getById(Long id);
     List<Client> getByPais(String pais);
+    void delete(Long id);
 }

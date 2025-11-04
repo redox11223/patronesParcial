@@ -40,6 +40,7 @@ public class Product {
   @Builder.Default
   @ToString.Exclude
   @EqualsAndHashCode.Exclude
+  @com.fasterxml.jackson.annotation.JsonIgnore
   private List<SaleDetail> detalleVenta=new ArrayList<>();
 
   @Column(nullable = false)
